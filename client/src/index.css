@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme{
+  --color-primary: #67AE6E; /*483AA0*/
+  --color-primary-dull: #90C67C; /*7965C1*/
+}
+
+*{
+  font-family:'Times New Roman', Times, serif;
+}
+
+.no-scrollbar::-webkit-scrollbar{
+  display: none;
+}

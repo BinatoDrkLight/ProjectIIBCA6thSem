@@ -1,0 +1,20 @@
+JWT_SECRET="examplekey"
+NODE_ENV = "development"
+
+#Admin Credentials
+SELLER_EMAIL = "admin@example.com"
+SELLER_PASSWORD = "example123"
+
+#Mongodb Setup
+MONGODB_URI = "mongodb+srv://user:password@"
+
+#Cloudinary 
+CLOUDINARY_CLOUD_NAME = 'cloudname'
+CLOUDINARY_API_KEY = '1234'
+CLOUDINARY_API_SECRET = '123abc'
+
+#Stripe Setup
+STRIPE_PUBLISHABLE_KEY = 'pk_test_123'
+STRIPE_SECRET_KEY = 'sk_test_123'
+
+STRIPE_WEBHOOK_SECRET = ''
