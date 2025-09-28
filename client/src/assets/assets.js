@@ -28,7 +28,7 @@ import boxIcon from "../assets/boxIcon.png";
 import plantBanner2 from "../assets/plantBanner2.jpg";
 import plantBanner2Sm from "../assets/plantBanner2Sm.jpg";
 import BottomBanner from "../assets/BottomBanner.jpg";
-import BottomBannerSm from "../assets/BottomBannerSm.jpg";
+import BottomBannerSm from "../assets/BottomBannerSm.png";
 
 import blackArrowIcon from "../assets/blackArrowIcon.png";
 import whiteArrowIcon from "../assets/whiteArrowIcon.png";
