@@ -41,19 +41,44 @@ const Cart = () => {
         }
     }
 
+    //For esewa
+    const redirectToEsewa = (paymentData) => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = paymentData.payment_url;
+
+    Object.entries(paymentData).forEach(([key, value]) => {
+        if (key !== "payment_url") {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+        }
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    };
+
     const placeOrder = async ()=>{
         try {
             if(!selectedAddress){
                 return toast.error("Please select an address")
             }
 
+            const orderPayload = {
+            userId: user._id,
+            items: cartArray.map(item => ({
+                product: item._id,
+                quantity: item.quantity
+            })),
+            address: selectedAddress._id
+            };
+
             //Place Order with COD
             if(paymentOption === "COD"){
-                const {data} = await axios.post('/api/order/cod', {
-                    userId: user._id,
-                    items: cartArray.map(item=> ({product: item._id, quantity: item.quantity})),
-                    address: selectedAddress._id
-                })
+                const {data} = await axios.post('/api/order/cod', orderPayload);
                 
                 if(data.success){
                     toast.success(data.message)
@@ -62,18 +87,23 @@ const Cart = () => {
                 } else {
                     toast.error(data.message)
                 }
-            } else {
+            } else if (paymentOption === "O-Stripe"){
                 // Place Order With Stripe
-                const {data} = await axios.post('/api/order/stripe', {
-                    userId: user._id,
-                    items: cartArray.map(item=> ({product: item._id, quantity: item.quantity})),
-                    address: selectedAddress._id
-                })
+                const {data} = await axios.post('/api/order/stripe', orderPayload)
                 
                 if(data.success){
                     window.location.replace(data.url)
                 } else {
                     toast.error(data.message)
+                }
+            } else if (paymentOption === "O-Esewa"){
+                // Place Order With eSewa
+                const {data} = await axios.post('/api/order/esewa', orderPayload)
+
+                if (data.success && data.paymentData) {
+                    redirectToEsewa(data.paymentData);
+                } else {
+                    toast.error(data.message || "Failed to initialize eSewa payment");
                 }
             }
         } catch (error) {
@@ -172,7 +202,8 @@ const Cart = () => {
 
                     <select onChange={e => setPaymentOption(e.target.value)} className="w-full border border-gray-300 bg-white px-3 py-2 mt-2 outline-none">
                         <option value="COD">Cash On Delivery</option>
-                        <option value="Online">Online Payment</option>
+                        <option value="O-Stripe">Online Payment - Stripe</option>
+                        <option value="O-Esewa">Online Payment - eSewa</option>
                     </select>
                 </div>
 

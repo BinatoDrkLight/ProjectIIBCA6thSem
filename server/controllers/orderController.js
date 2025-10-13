@@ -2,13 +2,16 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import stripe from "stripe"
 import User from "../models/User.js"
+import crypto from "crypto"
+import { v4 as uuidv4 } from 'uuid';
+
 
 // Place Order COD : /api/order/cod
 export const placeOrderCOD = async (req, res) => {
     try {
         const { userId, items, address } = req.body;
         if(!address || items.length === 0){
-            return res.json({ success: false, message: "Invalid Date" })
+            return res.json({ success: false, message: "Invalid Data" })
         }
 
         //Calculate Amount Using Items
@@ -42,7 +45,7 @@ export const placeOrderStripe = async (req, res) => {
         const {origin} = req.headers;
 
         if(!address || items.length === 0){
-            return res.json({ success: false, message: "Invalid Date" })
+            return res.json({ success: false, message: "Invalid Data" })
         }
 
         let productData = [];
@@ -66,7 +69,7 @@ export const placeOrderStripe = async (req, res) => {
             items,
             amount,
             address,
-            paymentType: "Online",
+            paymentType: "Online - Stripe",
         });
 
         // Stripe Gateway Initialize
@@ -91,7 +94,7 @@ export const placeOrderStripe = async (req, res) => {
             line_items,
             mode: "payment",
             success_url: `${origin}/loader?next=my-orders`,
-            cancel_url: `${origin}/loader?next=cart`,
+            cancel_url: `${origin}/cart`,
             metadata: {
                 orderId: order._id.toString(),
                 userId,
@@ -117,7 +120,7 @@ export const stripeWebhooks = async (request, response)=>{
             request.body,
             sig,
             process.env.STRIPE_WEBHOOK_SECRET
-        )
+        );
     } catch (error) {
         response.status(400).send(`Webhook Error: ${error.message}`)
     }
@@ -134,7 +137,7 @@ export const stripeWebhooks = async (request, response)=>{
 
             const { orderId, userId } = session.data[0].metadata;
             // Mark Payment as Paid
-            await Order.findByIdAndUpdate(orderId, {isPaid: true})
+            await Order.findByIdAndUpdate(orderId, {isPaid: true,  status: "Completed"})
             //Clear user cart
             await User.findByIdAndUpdate(userId, {cartItems: {}});
             break;
@@ -161,7 +164,171 @@ export const stripeWebhooks = async (request, response)=>{
     response.json({received: true})
 }
 
-// Get Order by User ID : /api/order/user
+// Place Order Esewa ----------------------------------------------------------------------------------------------
+const generateHmacSHA256 = (message, secret) => {
+  const hmac = crypto.createHmac('sha256', secret); // Create an HMAC instance
+  hmac.update(message);  // Update it with the message
+  const hash = hmac.digest('base64');  // Return the hash as a Base64 encoded string
+  return hash;
+};
+
+// Success Response Esewa : /api/order/esewa/success
+export const successResEsewa = async (req, res) => {
+  try {
+    let { orderId, data } = req.query;
+
+    // Handle eSewa double "?data="
+    if (orderId && orderId.includes("?data=")) {
+      const parts = orderId.split("?data=");
+      orderId = parts[0];
+      data = parts[1];
+    }
+
+    if (!data) {
+      console.error("Missing data from eSewa success response");
+      return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
+    }
+
+    // Decode base64 JSON data
+    const decoded = Buffer.from(data, "base64").toString("utf-8");
+    const jsonData = JSON.parse(decoded);
+
+    const { transaction_code, total_amount, transaction_uuid, status } = jsonData;
+
+    // Update database and mark it as paid
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      {
+        isPaid: true,
+        transaction_uuid,
+        transaction_code,
+        amount_paid: total_amount,
+        status: "Completed",
+      },
+      { new: true }
+    );
+
+    // Clear user cart (if order has userId reference)
+    if (order?.userId) {
+      await User.findByIdAndUpdate(order.userId, { cartItems: {} });
+    }
+
+    return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=true`);
+  } catch (error) {
+    console.error("Error in eSewa success route:", error);
+    return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
+  }
+};
+
+// Failure Response Esewa : /api/order/esewa/failure
+export const failureResEsewa = async (req, res) => {
+  try {
+    let { orderId, data } = req.query;
+
+    if (orderId && orderId.includes("?data=")) {
+      const parts = orderId.split("?data=");
+      orderId = parts[0];
+      data = parts[1];
+    }
+
+    if (!data) {
+      console.error("Missing data from eSewa failure");
+      return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
+    }
+
+    const decoded = Buffer.from(data, "base64").toString("utf-8");
+    const jsonData = JSON.parse(decoded);
+
+    const { transaction_uuid, total_amount, status } = jsonData;
+
+    // Update database and if payment failed, remove or mark order as failed
+    const order = await Order.findById(orderId);
+    if (order) {
+      if (status === "FAILED" || status === "CANCELLED") {
+        await Order.findByIdAndUpdate(orderId, {
+          status: "Failed",
+          transaction_uuid,
+          amount_paid: total_amount || 0,
+          isPaid: false,
+        });
+      } else {
+        await Order.findByIdAndDelete(orderId);
+      }
+    }
+
+    return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
+  } catch (error) {
+    console.error("eSewa failure route error:", error);
+    return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
+  }
+};
+
+// Place Order Esewa : /api/order/esewa
+export const placeOrderEsewa = async (req, res) => {
+    try {
+        const { userId, items, address } = req.body;
+
+        if(!address || items.length === 0){
+            return res.json({ success: false, message: "Invalid Data" })
+        }
+
+        let amount = 0;
+        let productData = [];
+
+        for (const item of items) {
+        const product = await Product.findById(item.product);
+        productData.push({
+            name: product.name,
+            price: product.offerPrice,
+            quantity: item.quantity,
+        });
+        amount += product.offerPrice * item.quantity;
+        }
+
+        // Add Tax Charge (2%)
+        let taxRate = 0.02;
+        let taxAmount = Math.floor(amount * taxRate);
+        let totalAmount = amount + taxAmount;
+        let transactionUuid = uuidv4();
+
+        const order = await Order.create({
+            userId,
+            items,
+            amount,
+            address,
+            paymentType: "Online - eSewa",
+        });
+
+        // Concatenate the fields in the exact order as defined in signed_field_names
+        const message = `total_amount=${totalAmount},transaction_uuid=${transactionUuid},product_code=${process.env.ESEWA_PRODUCT_CODE}`;
+
+        // Generate the signature using the function
+        const signature = generateHmacSHA256(message, process.env.ESEWA_SECRET_KEY);
+
+        return res.json({
+            success: true,
+            paymentData: {
+                amount,
+                tax_amount: taxAmount,
+                total_amount: totalAmount,
+                transaction_uuid: transactionUuid,
+                product_code: process.env.ESEWA_PRODUCT_CODE,
+                product_service_charge: "0",
+                product_delivery_charge: "0",
+                success_url: `${process.env.BACKEND_BASE_URL}/api/order/esewa/success?orderId=${order._id}`,
+                failure_url: `${process.env.BACKEND_BASE_URL}/api/order/esewa/failure?orderId=${order._id}`,
+                signed_field_names: "total_amount,transaction_uuid,product_code",
+                signature,
+                payment_url: process.env.ESEWA_PAYMENT_URL,
+            }
+        })
+    } catch (error) {
+        return res.json({ success: false, message: error.message });
+    }
+}
+
+
+// Get Order by User ID : /api/order/user -------------------------------------------------------------------------------------
 export const getUserOrders = async (req, res) => {
     try {
         const { userId } = req.body;

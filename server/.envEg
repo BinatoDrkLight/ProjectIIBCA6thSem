@@ -18,3 +18,11 @@ STRIPE_PUBLISHABLE_KEY = 'pk_test_123'
 STRIPE_SECRET_KEY = 'sk_test_123'
 
 STRIPE_WEBHOOK_SECRET = ''
+
+#Esewa Setup
+ESEWA_SECRET_KEY = '8gBm/:&EnhH.1/q'
+ESEWA_PAYMENT_URL = 'https://rc-epay.esewa.com.np/api/epay/main/v2/form'
+ESEWA_PRODUCT_CODE = 'EPAYTEST'
+
+FRONTEND_BASE_URL = 'http://localhost:5173'
+BACKEND_BASE_URL = 'http://localhost:4000'

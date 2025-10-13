@@ -57,6 +57,7 @@ const AddAddress = () => {
 
      useEffect(()=>{
         if(!user){
+            toast.error("Please login first")
             navigate('/cart')
         }
      },[])
