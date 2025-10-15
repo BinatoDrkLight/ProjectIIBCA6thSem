@@ -21,7 +21,6 @@ const SellerLogin = ()=>{
         } catch (error) {
             toast.error(error.message)
         }
-        
     }
 
     useEffect(()=>{

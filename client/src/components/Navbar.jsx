@@ -23,8 +23,7 @@ const Navbar = () => {
 
             <NavLink to='/' onClick={()=> setOpen(false)}>
                 <div className='flex'>
-                    <img className="h-8" src={assets.logoPlant} alt="logoPlant" />
-                    <img className='h-8' src={assets.blackPlantyIcon} alt="Black Planty Icon" />
+                    <img className="h-8" src={assets.blackPlantyLogo} alt="Black Logo Plant" />
                 </div>
             </NavLink>
 

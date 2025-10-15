@@ -165,23 +165,46 @@ export const stripeWebhooks = async (request, response)=>{
 }
 
 // Place Order Esewa ----------------------------------------------------------------------------------------------
+// Create signature
 const generateHmacSHA256 = (message, secret) => {
-  const hmac = crypto.createHmac('sha256', secret); // Create an HMAC instance
-  hmac.update(message);  // Update it with the message
-  const hash = hmac.digest('base64');  // Return the hash as a Base64 encoded string
-  return hash;
+  return crypto.createHmac("sha256", secret).update(message).digest("base64");
 };
+
+// Verify Esewa Signature
+const verifyEsewaSignature = (jsonData) => {
+  try {
+    // Read field order exactly as eSewa signed it
+    const signedFieldNames = jsonData.signed_field_names?.split(",") || [];
+
+    // Reconstruct the same message string eSewa signed
+    const message = signedFieldNames
+      .map((field) => `${field}=${jsonData[field]}`)
+      .join(",");
+
+    const expectedSignature = generateHmacSHA256(message, process.env.ESEWA_SECRET_KEY);
+
+    return {
+      ok: expectedSignature === jsonData.signature,
+      message,
+      expectedSignature,
+    };
+  } catch (err) {
+    console.error("Signature verification error:", err);
+    return { ok: false, message: "", expectedSignature: "" };
+  }
+};
+
 
 // Success Response Esewa : /api/order/esewa/success
 export const successResEsewa = async (req, res) => {
   try {
     let { orderId, data } = req.query;
 
-    // Handle eSewa double "?data="
+    // Handle ?data= duplication
     if (orderId && orderId.includes("?data=")) {
-      const parts = orderId.split("?data=");
-      orderId = parts[0];
-      data = parts[1];
+      const [idPart, dataPart] = orderId.split("?data=");
+      orderId = idPart;
+      data = dataPart;
     }
 
     if (!data) {
@@ -189,13 +212,27 @@ export const successResEsewa = async (req, res) => {
       return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
     }
 
-    // Decode base64 JSON data
+    // Decode and parse JSON
     const decoded = Buffer.from(data, "base64").toString("utf-8");
     const jsonData = JSON.parse(decoded);
 
-    const { transaction_code, total_amount, transaction_uuid, status } = jsonData;
+    // Verify signature dynamically
+    const { ok, message, expectedSignature } = verifyEsewaSignature(jsonData);
+    if (!ok) {
+      console.error("Signature mismatch!");
+      console.log({ message, expectedSignature, receivedSignature: jsonData.signature });
+      return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
+    }
 
-    // Update database and mark it as paid
+   // Check payment status
+    const successStatuses = ["SUCCESS", "COMPLETE"];
+    if (!successStatuses.includes(jsonData.status)) {
+        console.error("Payment not successful:", jsonData.status);
+        return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
+    }
+
+    // Update DB
+    const { transaction_uuid, transaction_code, total_amount } = jsonData;
     const order = await Order.findByIdAndUpdate(
       orderId,
       {
@@ -208,7 +245,6 @@ export const successResEsewa = async (req, res) => {
       { new: true }
     );
 
-    // Clear user cart (if order has userId reference)
     if (order?.userId) {
       await User.findByIdAndUpdate(order.userId, { cartItems: {} });
     }
@@ -225,43 +261,58 @@ export const failureResEsewa = async (req, res) => {
   try {
     let { orderId, data } = req.query;
 
+    // Handle ?data= duplication
     if (orderId && orderId.includes("?data=")) {
-      const parts = orderId.split("?data=");
-      orderId = parts[0];
-      data = parts[1];
+      const [idPart, dataPart] = orderId.split("?data=");
+      orderId = idPart;
+      data = dataPart;
     }
 
     if (!data) {
-      console.error("Missing data from eSewa failure");
+      console.error("Missing data from eSewa failure response");
       return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
     }
 
+    // Decode base64 data from eSewa
     const decoded = Buffer.from(data, "base64").toString("utf-8");
     const jsonData = JSON.parse(decoded);
 
+    // Verify signature dynamically
+    const { ok, message, expectedSignature } = verifyEsewaSignature(jsonData);
+    if (!ok) {
+      console.error("Signature mismatch on failure response!");
+      console.log({
+        message,
+        expectedSignature,
+        receivedSignature: jsonData.signature,
+      });
+      return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
+    }
+
+    // Extract fields
     const { transaction_uuid, total_amount, status } = jsonData;
 
-    // Update database and if payment failed, remove or mark order as failed
+    // Update database: mark as Failed or Pending
     const order = await Order.findById(orderId);
     if (order) {
-      if (status === "FAILED" || status === "CANCELLED") {
-        await Order.findByIdAndUpdate(orderId, {
-          status: "Failed",
-          transaction_uuid,
-          amount_paid: total_amount || 0,
-          isPaid: false,
-        });
-      } else {
-        await Order.findByIdAndDelete(orderId);
-      }
+      await Order.findByIdAndUpdate(orderId, {
+        status:
+          status === "FAILED" || status === "CANCELLED"
+            ? "Failed"
+            : "Pending",
+        transaction_uuid,
+        amount_paid: total_amount || 0,
+        isPaid: false,
+      });
     }
 
     return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
   } catch (error) {
-    console.error("eSewa failure route error:", error);
+    console.error("Error in eSewa failure route:", error);
     return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
   }
 };
+
 
 // Place Order Esewa : /api/order/esewa
 export const placeOrderEsewa = async (req, res) => {
@@ -287,8 +338,8 @@ export const placeOrderEsewa = async (req, res) => {
 
         // Add Tax Charge (2%)
         let taxRate = 0.02;
-        let taxAmount = Math.floor(amount * taxRate);
-        let totalAmount = amount + taxAmount;
+        let taxAmount = parseFloat((amount * taxRate).toFixed(2));
+        let totalAmount = parseFloat((amount + taxAmount).toFixed(2));
         let transactionUuid = uuidv4();
 
         const order = await Order.create({
@@ -299,7 +350,6 @@ export const placeOrderEsewa = async (req, res) => {
             paymentType: "Online - eSewa",
         });
 
-        // Concatenate the fields in the exact order as defined in signed_field_names
         const message = `total_amount=${totalAmount},transaction_uuid=${transactionUuid},product_code=${process.env.ESEWA_PRODUCT_CODE}`;
 
         // Generate the signature using the function

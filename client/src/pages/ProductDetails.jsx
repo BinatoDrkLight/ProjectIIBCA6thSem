@@ -54,7 +54,7 @@ const ProductDetails = () => {
 
                     <div className="flex items-center gap-0.5 mt-1">
                         {Array(5).fill('').map((_, i) => (
-                            <img src={i<4 ? assets.starIcon : assets.starIconDull} alt="" className="md:w-4 w-3.5"/>
+                            <img src={i<4 ? assets.starIconDull : assets.starIcon} alt="" className="md:w-4 w-3.5"/>
                         ))}
                         <p className="text-base ml-2">(4)</p>
                     </div>

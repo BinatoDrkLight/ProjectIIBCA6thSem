@@ -7,8 +7,7 @@ const Footer = () => {
             <div className="flex flex-col md:flex-row items-start justify-between gap-10 py-10 border-b border-gray-500/30 text-gray-500">
                 <div>
                     <div className='flex'>
-                        <img className="h-8" src={assets.logoPlant} alt="logoPlant" />
-                        <img className='h-8' src={assets.blackPlantyIcon} alt="Black Planty Icon" />
+                        <img className='h-8' src={assets.blackPlantyLogo} alt="Black Planty Logo" />
                     </div>
                     <p className="max-w-[410px] mt-6">We bring the beauty of nature straight to your doorstep, delivering a variety of plants right to your home. 
                         Whether you're brightening up your living room or starting a garden, we've got you covered with easy ordering, fast delivery

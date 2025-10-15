@@ -1,6 +1,6 @@
-import logoPlant from "../assets/logoPlant.png";
-import blackPlantyIcon from "../assets/blackPlantyIcon.svg"
-import whitePlantyIcon from "../assets/whitePlantyIcon.svg"
+import plantyLogo from "../assets/plantyLogo.svg"
+import blackPlantyLogo from "../assets/blackPlantyLogo.svg"
+import whitePlantyLogo from "../assets/whitePlantyLogo.svg"
 import searchIcon from "../assets/searchIcon.png";
 import menuIcon from "../assets/menuIcon.png";
 import starIcon from "../assets/starIcon.png";
@@ -51,9 +51,9 @@ import snakePlant from "../assets/snakePlant.jpg";
 import userProfile from "../assets/userProfile.png";
 
 export const assets = {
-    logoPlant, 
-    blackPlantyIcon,
-    whitePlantyIcon,
+    plantyLogo,
+    blackPlantyLogo,
+    whitePlantyLogo,
     searchIcon,
     menuIcon,
     starIcon,

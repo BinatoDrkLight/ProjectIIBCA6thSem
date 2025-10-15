@@ -6,9 +6,7 @@ import toast from "react-hot-toast";
 const SellerLayout = () => {
 
     const { axios, navigate } = useAppContext()
-
-  
-
+    
     const sidebarLinks = [
         { name: "Add Product", path: "/seller", icon: assets.addIcon },
         { name: "Product List", path: "/seller/product-list", icon: assets.productListIcon },
@@ -33,7 +31,7 @@ const SellerLayout = () => {
         <>
             <div className="flex items-center justify-between px-4 md:px-8 border-b border-gray-300 py-3 bg-white">
                 <Link to='/'>
-                    <img src={assets.logoPlant} alt="logo icon" className="cursor-pointer h-9"/>
+                    <img src={assets.blackPlantyLogo} alt="Black Planty Logo" className="cursor-pointer h-9"/>
                 </Link>
                 <div className="flex items-center gap-5 text-gray-500">
                     <p>Hi! Admin</p>
