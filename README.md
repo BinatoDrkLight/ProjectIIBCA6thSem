@@ -12,8 +12,12 @@
 
 Planty is a web-based plant store built with the MERN stack, enabling users to discover and purchase plants online while allowing sellers to manage products and orders efficiently. The platform features a responsive design and showcases modern web development techniques, secure payments, and database-driven functionality.
 
+## Live Demo
+You can view the live project > [<img src="client/src/assets/blackPlantyLogo.svg" alt="Planty Logo" width="60" style="vertical-align:middle;" />](https://planty-delta.vercel.app/)
+
 ## Table of Contents
 - [About](#about)
+- [Live Demo](#live-demo)
 - [Features](#features)
 - [Built With](#built-with)
 - [Getting Started](#getting-started)
@@ -141,3 +145,4 @@ Author: Binesh Adhikari
 Email: binesh2adhikari@gmail.com  
 GitHub: https://github.com/BinatoDrkLight/  
 LinkedIn: https://www.linkedin.com/in/binesh-adhikari-it  
+Project Live: https://planty-delta.vercel.app/
