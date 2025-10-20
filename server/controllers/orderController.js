@@ -248,7 +248,7 @@ export const successResEsewa = async (req, res) => {
       await User.findByIdAndUpdate(order.userId, { cartItems: {} });
     }
 
-    return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=true`);
+    return res.redirect(`${process.env.FRONTEND_BASE_URL}/loader?next=my-orders&success=true`);
   } catch (error) {
     console.error("Error in eSewa success route:", error);
     return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
