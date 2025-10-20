@@ -217,7 +217,7 @@ export const successResEsewa = async (req, res) => {
     const jsonData = JSON.parse(decoded);
 
     // Verify signature dynamically
-    const { ok, message, expectedSignature } = verifyEsewaSignature(jsonData);
+    const { ok } = verifyEsewaSignature(jsonData);
     if (!ok) {
       console.error("Signature mismatch!");
       return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);

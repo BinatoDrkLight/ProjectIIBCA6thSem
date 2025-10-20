@@ -4,7 +4,7 @@ const authUser = async (req, res, next) => {
     const {token} = req.cookies;
 
     if(!token){
-        return res.json({ success: false, message: 'Not Authorized' });
+        return res.json({ success: false, message: 'Token Not Authorized' });
     }
 
     try{
@@ -13,7 +13,7 @@ const authUser = async (req, res, next) => {
             req.body = req.body || {};
             req.body.userId = tokenDecode.id;
         } else {
-            return res.json({ success: false, message: 'Not Authorized' });
+            return res.json({ success: false, message: 'Decode Not Authorized' });
         }
         next();
 
