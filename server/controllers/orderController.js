@@ -220,7 +220,6 @@ export const successResEsewa = async (req, res) => {
     const { ok, message, expectedSignature } = verifyEsewaSignature(jsonData);
     if (!ok) {
       console.error("Signature mismatch!");
-      console.log({ message, expectedSignature, receivedSignature: jsonData.signature });
       return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
     }
 
@@ -281,11 +280,6 @@ export const failureResEsewa = async (req, res) => {
     const { ok, message, expectedSignature } = verifyEsewaSignature(jsonData);
     if (!ok) {
       console.error("Signature mismatch on failure response!");
-      console.log({
-        message,
-        expectedSignature,
-        receivedSignature: jsonData.signature,
-      });
       return res.redirect(`${process.env.FRONTEND_BASE_URL}/my-orders?success=false`);
     }
 
