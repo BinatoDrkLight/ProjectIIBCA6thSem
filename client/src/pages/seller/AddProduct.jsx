@@ -11,6 +11,9 @@ const AddProduct = ()=>{
     const [category, setCategory] = useState('')
     const [price, setPrice] = useState('')
     const [offerPrice , setOfferPrice] = useState('')
+    const [inStock, setInStock] = useState('true')
+    const [inStockAmount, setInStockAmount] = useState('')
+
 
     const {axios} = useAppContext()
 
@@ -23,7 +26,9 @@ const AddProduct = ()=>{
                 description: description.split('\n'),
                 category,
                 price,
-                offerPrice
+                offerPrice,
+                inStock,
+                inStockAmount
             }
 
             const formData = new FormData();
@@ -36,12 +41,14 @@ const AddProduct = ()=>{
 
             if(data.success){
                 toast.success(data.message)
-                setName('');
+                setName('')
                 setDescription('')
                 setCategory('')
                 setPrice('')
                 setOfferPrice('')
                 setFiles([])
+                setInStock('')
+                setInStockAmount('')
             } else {
                 toast.error(data.message)
             }
@@ -100,6 +107,14 @@ const AddProduct = ()=>{
                         <label className="text-base font-medium" htmlFor="offer-price">Offer Price</label>
                         <input onChange={(e)=> setOfferPrice(e.target.value)} value={offerPrice}
                         id="offer-price" type="number" placeholder="0" className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40" required />
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-5 flex-wrap">
+                    <div className="flex-1 flex flex-col gap-1 w-32">
+                        <label className="text-base font-medium" htmlFor="inStock-amount">In Stock Amount</label>
+                        <input onChange={(e)=> setInStockAmount(e.target.value)} value={inStockAmount}
+                        id="product-stock-amount" type="number" placeholder="0" className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40" required />
                     </div>
                 </div>
                 <button className="px-8 py-2.5 bg-primary text-white font-medium rounded cursor-pointer">ADD</button>

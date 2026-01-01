@@ -11,7 +11,7 @@ const Cart = () => {
     const[selectedAddress, setSelectedAddress] = useState(null)
     const[paymentOption, setPaymentOption] = useState("COD")
 
-    const getCart = ()=>{
+    const getCart = ()=>{                               
         let tempArray = []
         for(const key in cartItems){
             const product = products.find((item)=> item._id === key)
@@ -173,7 +173,6 @@ const Cart = () => {
                 </button>
 
             </div>
-
             <div className="max-w-[360px] w-full bg-gray-100/40 p-5 max-md:mt-16 border border-gray-300/70">
                 <h2 className="text-xl md:text-xl font-medium">Order Summary</h2>
                 <hr className="border-gray-300 my-5" />

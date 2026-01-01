@@ -1,8 +1,9 @@
 import React from 'react';
 import { assets } from '../assets/assets';
 import { useAppContext } from '../context/AppContext';
-
-
+import toast from 'react-hot-toast';
+import { useEffect } from 'react';
+    
 const ProductCard = ({product}) => {
     const {currency, addToCart, removeFromCart, cartItems, navigate} = useAppContext()
 
@@ -26,7 +27,7 @@ const ProductCard = ({product}) => {
                     </p>
                     <div onClick={(e) => {e.stopPropagation(); }} className="text-primary">
                         {!cartItems[product._id] ? (
-                            <button className="flex items-center justify-center gap-1 bg-primary/10 border border-primary/40 w-[3.4rem] h-[1.8rem] md:w-[80px] rounded cursor-pointer" onClick={() => addToCart(product._id)} >
+                            <button className="flex items-center justify-center gap-1 bg-primary/10 border border-primary/40 w-[3.4rem] h-[1.8rem] md:w-[80px] rounded cursor-pointer" onClick={() => addToCart(product._id, product.inStockAmount)} >
                                 <img className="w-4 h-4 md:w-5 md:h-5" src={assets.addToCart} alt="cartIcon"/>
                                 Add
                             </button>
@@ -36,7 +37,7 @@ const ProductCard = ({product}) => {
                                     -
                                 </button>
                                 <span className="w-5 text-center">{cartItems[product._id]}</span>
-                                <button onClick={() => addToCart(product._id)} className="cursor-pointer text-md px-2 h-full" >
+                                <button onClick={() => {addToCart(product._id, product.inStockAmount)}} className="cursor-pointer text-md px-2 h-full" >
                                     +
                                 </button>
                             </div>

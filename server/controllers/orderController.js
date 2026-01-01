@@ -5,7 +5,6 @@ import User from "../models/User.js"
 import crypto from "crypto"
 import { v4 as uuidv4 } from 'uuid';
 
-
 // Place Order COD : /api/order/cod
 export const placeOrderCOD = async (req, res) => {
     try {
@@ -137,7 +136,7 @@ export const stripeWebhooks = async (request, response)=>{
 
             const { orderId, userId } = session.data[0].metadata;
             // Mark Payment as Paid
-            await Order.findByIdAndUpdate(orderId, {isPaid: true,  status: "Completed"})
+            await Order.findByIdAndUpdate(orderId, {isPaid: true,  paymentStatus: "Completed"})
             //Clear user cart
             await User.findByIdAndUpdate(userId, {cartItems: {}});
             break;
@@ -239,7 +238,7 @@ export const successResEsewa = async (req, res) => {
         transaction_uuid,
         transaction_code,
         amount_paid: total_amount,
-        status: "Completed",
+        paymentStatus: "Completed",
       },
       { new: true }
     );
@@ -396,4 +395,19 @@ export const getAllOrders = async (req, res) => {
     } catch (error) {
         return res.json({ success: false, message: error.message });
     }
+}
+
+// Update order/package status : /api/order/update-orderstatus
+export const updateOrderStatus = async (req, res) => { 
+  try{
+    const { orderId, orderStatus } = req.body;
+    const updatedOrder = await Order.findByIdAndUpdate(orderId, { orderStatus }, {new: true})
+    if(!updatedOrder){
+      return res.json.status(404)({ success: false, message: "no order found" });
+    } else {
+       return res.json({ success: true, message: "success" });
+    }
+  } catch (error){
+    return res.json({ success: false, message: error.message });
+  }
 }

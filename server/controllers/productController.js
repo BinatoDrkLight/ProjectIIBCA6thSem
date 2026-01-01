@@ -60,3 +60,15 @@ export const changeStock = async (req, res) => {
         res.json({ success: false, message: error.message })
     }
 }
+
+// Remove Product : /api/product/remove
+export const removeFromDB = async (req, res) => {
+    try {
+        const { id } = req.body
+        await Product.findByIdAndDelete(id)
+        res.json({success: true, message: "Removed successfully"})
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message })
+    }
+}

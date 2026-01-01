@@ -54,6 +54,7 @@ export const AppContextProvider = ({children}) => {
             const { data } = await axios.get('/api/product/list')
             if(data.success){
                 setProducts(data.products)
+                //setInStockAmount(data.products)
             } else {
                 toast.error(data.message)
             }
@@ -62,17 +63,25 @@ export const AppContextProvider = ({children}) => {
         }
     }
 
+    /********************************************* InStockAmount *****************************************************/
+    /***************************************************************************************************************/
     //Add Products to Cart
-    const addToCart = (itemId)=>{
+    const addToCart = (itemId, amount)=>{
         let cartData = structuredClone(cartItems);
 
-        if(cartData[itemId]){
-            cartData[itemId] += 1;
-        }else{
-            cartData[itemId] = 1;
-        }
-        setCartItems(cartData)
-        toast.success("Added to Cart")
+       
+            if(cartData[itemId]){
+                if(amount > cartData[itemId]){
+                    cartData[itemId] += 1;
+                    toast.success("Added to Cart")
+                } else {
+                    toast.error("No item left in the stock");
+                }
+            }else{
+                cartData[itemId] = 1;
+                toast.success("Added to Cart")
+            }
+            setCartItems(cartData)   
     }
 
     //Update Cart Item Quantity
@@ -139,13 +148,14 @@ export const AppContextProvider = ({children}) => {
         if(user){
             updateCart()
         }
+
     },[cartItems])
 
     const value = {navigate, user, setUser, setIsSeller, isSeller, showUserLogin, setShowUserLogin, products, 
         currency, addToCart, updateCartItem, removeFromCart, cartItems, searchQuery, setSearchQuery, getCartAmount,
-        getCartCount, axios, fetchProducts, setCartItems
+        getCartCount, axios, fetchProducts, setCartItems,
     }
-        return <AppContext.Provider value = {value}> 
+        return <AppContext.Provider value = {value}>
             {children}
         </AppContext.Provider>
 }

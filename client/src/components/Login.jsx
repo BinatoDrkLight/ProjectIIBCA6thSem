@@ -10,6 +10,17 @@ const Login = () => {
     const [name, setName] = React.useState("");
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
+    const [otp, setOtp] = React.useState("");
+
+    // const onSubmitOtpVerifier = async (event) => {
+    //     try{
+    //         event.preventDefault();
+
+
+    //     } catch (error) {
+    //         toast.error(error.message)
+    //     }
+    // }
 
     const onSubmitHandler = async (event) =>{
         try {
@@ -49,10 +60,21 @@ const Login = () => {
                     <p>Email</p>
                     <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="email" required />
                 </div>
-                <div className="w-full ">
-                    <p>Password</p>
-                    <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="password" required />
-                </div>
+
+                {(state === "register" ||  state === "login") && (
+                    <div className="w-full ">
+                        <p>Password</p>
+                        <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="password" required />
+                    </div>
+                )}
+
+                 {state === "otpVerification" && (
+                    <div className="w-full ">
+                        <p>OTP </p>
+                        <input onChange={(e) => setOtp(e.target.value)} value={otp} placeholder="OTP" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="number" required />
+                    </div>
+                )}
+                
                 {state === "register" ? (
                     <p>
                         Already have account? <span onClick={() => setState("login")} className="text-indigo-500 cursor-pointer">click here</span>
@@ -62,9 +84,18 @@ const Login = () => {
                         Create an account? <span onClick={() => setState("register")} className="text-primary cursor-pointer">click here</span>
                     </p>
                 )}
-                <button className="bg-primary hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
-                    {state === "register" ? "Create Account" : "Login"}
-                </button>
+
+                {state === "register" && (
+                    <button onClick={() => setState("otpVerification")} type='button' className="bg-primary hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
+                        Create Account
+                    </button>
+                )}
+                
+                {(state === "login" ||  state === "otpVerification") && (
+                    <button className="bg-primary hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
+                        {state === "login" ? "Login" : "Send OTP"}
+                    </button>
+                )}
             </form>
         </div>
     )
