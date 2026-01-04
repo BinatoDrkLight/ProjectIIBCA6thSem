@@ -1,35 +1,71 @@
 import User from "../models/User.js";
+import Otp from "../models/Otp.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { sendEmail } from "../configs/sendEmail.js";
 
-//Register User : api/user/register
-export const register = async (req, res) => {
-    try {
+// Login User : /api/user/otp-verification
+export const otpVerification = async (req, res) => {
+    try{
         const {name, email, password} = req.body;
 
         if(!name || !email || !password){
             return res.json({success: false, message: 'Missing Details'})
         }
 
-        const existingUser = await User.findOne({email})
+        const existingUser = await User.findOne({ email })
 
-        if(existingUser)
+        if(existingUser){
             return res.json({success: false, message: 'User already exists'})
+        }
+            
+
+        const otp = Math.floor(100000 + Math.random() * 900000);
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
+
+        await Otp.create({email: email, otpCode: otp, expiresAt: expiresAt})
+
+        await sendEmail(email, otp);
+        res.json({ success: true, message: 'OTP sent' });
+    } catch (err) {
+        console.error(err);
+        res.json({ success: false, message: 'Email failed' });
+    }
+}
+
+export const register = async (req, res) => {
+    try {
+        const {name, email, password, otp} = req.body;
+
+        if(!name || !email || !password || !otp){
+            return res.json({success: false, message: 'Missing Details'})
+        }
         
-        const hashedPassword = await bcrypt.hash(password, 10)
+        const otpDB = await Otp.findOne({email: email}).sort({createdAt: -1});
+        if(otp != otpDB.otpCode){
+            res.json({ success: false, message: "Invalid OTP" });
+        } else {
+            const hashedPassword = await bcrypt.hash(password, 10)
 
-        const user = await User.create({name, email, password: hashedPassword})
+            const user = await User.create({name, email, password: hashedPassword})
+            if(user){
+                await Otp.updateOne({ email: email }, { $set: {userId: user._id, isUsed: true }, $unset: { email: "" } }, { sort: {createdAt: -1} }) 
+            } else {
+                return res.json({ success: false, message: "User not created"})
+            }
+           
 
-        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: '7d'});
+            const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: '7d'});
 
-        res.cookie('token', token, {
-            httpOnly: true, //Prevent Javascript to access cookie
-            secure: process.env.NODE_ENV === 'production', //Use secure cookies in production
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', //CSRF protection
-            maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time in ms
-        })
+            res.cookie('token', token, {
+                httpOnly: true, //Prevent Javascript to access cookie
+                secure: process.env.NODE_ENV === 'production', //Use secure cookies in production
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', //CSRF protection
+                maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time in ms
+            })
 
-        return res.json({success: true, user: {email: user.email, name: user.name}})
+            return res.json({success: true, user: {email: user.email, name: user.name}})
+        }
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message });

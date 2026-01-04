@@ -151,11 +151,13 @@ const Cart = () => {
                                     <p>Size: <span>{product.size || "N/A"}</span></p>
                                     <div className='flex items-center'>
                                         <p>Qty:</p>
-                                        <select onChange={e => updateCartItem(product._id, Number(e.target.value))} value={cartItems[product._id]} className='outline-none' onClick={(e) => e.stopPropagation()}>
-                                            {Array(cartItems[product._id] > 9 ? cartItems[product._id] : 9).fill('').map((_, index) => (
-                                                <option key={index} value={index + 1}>{index + 1}</option>
+                                      <select onChange={e => updateCartItem(product._id, Number(e.target.value))} value={cartItems[product._id]} className="outline-none" onClick={e => e.stopPropagation()}>
+                                        {Array(product.inStockAmount).fill("").map((_, index) => (
+                                            <option key={index} value={index + 1}>
+                                                {index + 1}
+                                            </option>
                                             ))}
-                                        </select>
+                                    </select>
                                     </div>
                                 </div>
                             </div>

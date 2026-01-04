@@ -3,7 +3,6 @@ import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 
 const Login = () => {
-
     const {setShowUserLogin, setUser, axios, navigate} = useAppContext();
 
     const [state, setState] = React.useState("login");
@@ -12,23 +11,25 @@ const Login = () => {
     const [password, setPassword] = React.useState("");
     const [otp, setOtp] = React.useState("");
 
-    // const onSubmitOtpVerifier = async (event) => {
-    //     try{
-    //         event.preventDefault();
-
-
-    //     } catch (error) {
-    //         toast.error(error.message)
-    //     }
-    // }
+    const sendOtp = async () => {
+        try {
+            const {data} = await axios.post(`/api/user/${state}`, { name, email, password });
+            if(data.success){
+                toast.success("OTP sent to email.")
+                setState("register")
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.response.data.message)
+        }
+    }; 
 
     const onSubmitHandler = async (event) =>{
         try {
             event.preventDefault();
 
-            const {data} = await axios.post(`/api/user/${state}`, {
-                name, email, password
-            });
+            const {data} = await axios.post(`/api/user/${state}`, { name, email, password, otp });
 
             if(data.success){
                 navigate('/')
@@ -41,7 +42,6 @@ const Login = () => {
         } catch (error) {
             toast.error(error.message)
         }
-       
     }
 
     return (
@@ -50,7 +50,7 @@ const Login = () => {
                 <p className="text-2xl font-medium m-auto">
                     <span className="text-primary">User</span> {state === "login" ? "Login" : "Sign Up"}         
                 </p>
-                {state === "register" && (
+                {state === "otp-verification" && (
                     <div className="w-full">
                         <p>Name</p>
                         <input onChange={(e) => setName(e.target.value)} value={name} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="text" required />
@@ -61,39 +61,39 @@ const Login = () => {
                     <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="email" required />
                 </div>
 
-                {(state === "register" ||  state === "login") && (
+                {(state === "otp-verification" ||  state === "login") && (
                     <div className="w-full ">
                         <p>Password</p>
                         <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="password" required />
                     </div>
                 )}
 
-                 {state === "otpVerification" && (
+                 {state === "register" && (
                     <div className="w-full ">
                         <p>OTP </p>
                         <input onChange={(e) => setOtp(e.target.value)} value={otp} placeholder="OTP" className="border border-gray-200 rounded w-full p-2 mt-1 outline-primary" type="number" required />
                     </div>
                 )}
                 
-                {state === "register" ? (
+                {state === "otp-verification" ? (
                     <p>
                         Already have account? <span onClick={() => setState("login")} className="text-indigo-500 cursor-pointer">click here</span>
                     </p>
                 ) : (
                     <p>
-                        Create an account? <span onClick={() => setState("register")} className="text-primary cursor-pointer">click here</span>
+                        Create an account? <span onClick={() => setState("otp-verification")} className="text-primary cursor-pointer">click here</span>
                     </p>
                 )}
 
-                {state === "register" && (
-                    <button onClick={() => setState("otpVerification")} type='button' className="bg-primary hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
+                {state === "otp-verification" && (
+                    <button onClick={() => sendOtp()} type='button' className="bg-primary hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
                         Create Account
                     </button>
                 )}
                 
-                {(state === "login" ||  state === "otpVerification") && (
+                {(state === "login" ||  state === "register") && (
                     <button className="bg-primary hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
-                        {state === "login" ? "Login" : "Send OTP"}
+                        {state === "login" ? "Login" : "Verify OTP"}
                     </button>
                 )}
             </form>
