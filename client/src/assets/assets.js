@@ -22,6 +22,7 @@ import productListIcon from "../assets/productListIcon.png";
 import orderIcon from "../assets/orderIcon.png";
 import uploadArea from "../assets/uploadArea.png";
 import boxIcon from "../assets/boxIcon.png";
+import googleLogo from "../assets/googleLogo.png"
 
 
 
@@ -75,6 +76,7 @@ export const assets = {
     orderIcon,
     uploadArea,
     boxIcon,
+    googleLogo,
 
     plantBanner2,
     plantBanner2Sm,

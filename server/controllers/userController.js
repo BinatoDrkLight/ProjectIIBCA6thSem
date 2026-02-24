@@ -3,6 +3,7 @@ import Otp from "../models/Otp.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sendEmail } from "../configs/sendEmail.js";
+import { google } from "googleapis";
 
 // Login User : /api/user/otp-verification
 export const otpVerification = async (req, res) => {
@@ -103,6 +104,69 @@ export const login = async (req, res) => {
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message });
+    }
+}
+
+//Login User with google : /api/user/google-url
+export const googleUrl = (req, res) => {
+    try{
+        // OAuth2 client
+        const oauth2Client = new google.auth.OAuth2(
+        process.env.CLIENT_ID,
+        process.env.CLIENT_SECRET,
+        process.env.REDIRECT_URI
+        );
+
+        const SCOPES = [
+            "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/userinfo.email"
+        ];
+
+        const authUrl = oauth2Client.generateAuthUrl({
+            access_type: "offline",
+            scope: SCOPES
+        });
+        return res.json({success: true, url: authUrl})
+    } catch(error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Redirect URI : /api/user/oauth2callback
+export const redirectOauth = async (req, res) => {
+    const code = req.query.code;
+    if (!code) return res.send("No authorization code");
+
+    try {
+        // Exchange code for tokens
+        const { tokens } = await oauth2Client.getToken(code);
+        oauth2Client.setCredentials(tokens);
+
+        // Fetch user profile
+        const oauth2 = google.oauth2({
+        auth: oauth2Client,
+        version: "v2"
+        });
+
+        const { data } = await oauth2.userinfo.get();
+        //const ifUser = await User.findOne(data.email);
+
+        const user = await User.create(data.name, data.email)
+
+         const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: '7d'});
+
+            res.cookie('token', token, {
+                httpOnly: true, //Prevent Javascript to access cookie
+                secure: process.env.NODE_ENV === 'production', //Use secure cookies in production
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', //CSRF protection
+                maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time in ms
+            })
+
+            return res.redirect(`${process.env.FRONTEND_BASE_URL}/`);
+    }catch(error){
+        console.error(error);
+        res.status(500).send("Authentication failed");
     }
 }
 

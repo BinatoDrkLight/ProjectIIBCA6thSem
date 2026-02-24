@@ -11,6 +11,7 @@ import cartRouter from './routes/cartRoute.js';
 import addressRouter from './routes/addressRoute.js';
 import orderRouter from './routes/orderRoute.js';
 import { stripeWebhooks } from './controllers/orderController.js';
+import { updateRatingForCart } from './cronjob/updateRatingForCart.js';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -40,3 +41,5 @@ app.use('/api/order', orderRouter)
 app.listen(port, ()=>{
     console.log(`Server is running on http://localhost:${port}`)
 })
+
+updateRatingForCart();

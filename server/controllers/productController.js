@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary"
 import Product from "../models/Product.js"
+import glickoTwo from "../utils/glickotwo.js"
 
 // Add Product : /api/product/add
 export const addProduct = async (req, res) => {
@@ -67,6 +68,25 @@ export const removeFromDB = async (req, res) => {
         const { id } = req.body
         await Product.findByIdAndDelete(id)
         res.json({success: true, message: "Removed successfully"})
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Update rating when clicked : /api/product/update-click-rating
+export const updateClickRating = async (req, res) => {
+    try{
+        const { product, opponentsWithId, userId, from } = req.body
+        await glickoTwo({
+            winnerId: product,
+            loserIds: opponentsWithId,
+            weightForWin: 0.2,
+            weightForLoss: 0.05,
+            userId: userId,
+            from: from
+        });
+        res.json({success: true, message: "Click Rating Updated"})
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message })

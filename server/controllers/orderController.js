@@ -4,6 +4,19 @@ import stripe from "stripe"
 import User from "../models/User.js"
 import crypto from "crypto"
 import { v4 as uuidv4 } from 'uuid';
+import glickoTwo from "../utils/glickotwo.js"
+
+// Update Rating
+const updateRating = async(items) => {
+    for (let item of items) {
+        const success = await glickoTwo({
+            winnerId: item.product,
+            loserIds: item.opponents,
+            weightForWin: 1.0,
+            weightForLoss: 0.20,
+        });
+    }
+}
 
 // Place Order COD : /api/order/cod
 export const placeOrderCOD = async (req, res) => {
@@ -11,9 +24,9 @@ export const placeOrderCOD = async (req, res) => {
         const { userId, items, address } = req.body;
         if(!address || items.length === 0){
             return res.json({ success: false, message: "Invalid Data" })
-        }
+        }        
 
-        //Calculate Amount Using Items
+        // Calculate Amount Using Items
         let amount = await items.reduce(async(acc, item)=>{
             const product = await Product.findById(item.product);
             return (await acc) + product.offerPrice * item.quantity;
@@ -29,6 +42,9 @@ export const placeOrderCOD = async (req, res) => {
             address,
             paymentType: "COD",
         });
+
+        // Update Rating
+        await updateRating(items)
 
         return res.json({ success: true, message: "Order Placed Successfully" })
     } catch (error) {
@@ -139,6 +155,9 @@ export const stripeWebhooks = async (request, response)=>{
             await Order.findByIdAndUpdate(orderId, {isPaid: true,  paymentStatus: "Completed"})
             //Clear user cart
             await User.findByIdAndUpdate(userId, {cartItems: {}});
+            // Update Rating
+            await updateRating(items)
+
             break;
         }
             
@@ -246,6 +265,9 @@ export const successResEsewa = async (req, res) => {
     if (order?.userId) {
       await User.findByIdAndUpdate(order.userId, { cartItems: {} });
     }
+    
+    // Update Rating
+    await updateRating(items)
 
     return res.redirect(`${process.env.FRONTEND_BASE_URL}/loader?next=my-orders&success=true`);
   } catch (error) {

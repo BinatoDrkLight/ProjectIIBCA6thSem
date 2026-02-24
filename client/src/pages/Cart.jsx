@@ -4,19 +4,21 @@ import { assets, dummyAddress } from "../assets/assets";
 import toast from "react-hot-toast";
 
 const Cart = () => {
-    const{products, currency, cartItems, removeFromCart, getCartCount, updateCartItem, navigate, getCartAmount, axios, user, setCartItems} = useAppContext()
+    const{products, currency, cartItems, removeFromCart, removeAllFromCart, addToCart, getCartCount, updateCartItem, navigate, getCartAmount, axios, user, setCartItems} = useAppContext()
     const[cartArray, setCartArray] = useState([])
     const[addresses, setAddresses] = useState([])
     const[showAddress, setShowAddress] = useState(false)
     const[selectedAddress, setSelectedAddress] = useState(null)
     const[paymentOption, setPaymentOption] = useState("COD")
 
-    const getCart = ()=>{                               
+    const getCart = ()=>{      
         let tempArray = []
         for(const key in cartItems){
             const product = products.find((item)=> item._id === key)
             if(product){
-                product.quantity = cartItems[key]
+                product.quantity = cartItems[key].amount
+                product.date = cartItems[key].date
+                product.opponents = cartItems[key].opponents
                 tempArray.push(product)
             }
         }
@@ -71,8 +73,11 @@ const Cart = () => {
             userId: user._id,
             items: cartArray.map(item => ({
                 product: item._id,
-                quantity: item.quantity
+                quantity: item.quantity,
+                date: item.date,
+                opponents: item.opponents
             })),
+            
             address: selectedAddress._id
             };
 
@@ -81,6 +86,7 @@ const Cart = () => {
                 const {data} = await axios.post('/api/order/cod', orderPayload);
                 
                 if(data.success){
+                    // await axios.post('/api/product/update-rating')
                     toast.success(data.message)
                     setCartItems({})
                     navigate('/my-orders')
@@ -131,14 +137,15 @@ const Cart = () => {
                     Shopping Cart <span className="text-sm text-primary">{getCartCount()}</span>
                 </h1>
 
-                <div className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 text-base font-medium pb-3">
+                <div className="grid grid-cols-[2fr_1fr_1fr_1fr] text-gray-500 text-base font-medium pb-3">
                     <p className="text-left">Product Details</p>
                     <p className="text-center">Subtotal</p>
+                    <p className="text-center">Amount</p>
                     <p className="text-center">Action</p>
                 </div>
 
                 {cartArray.map((product, index) => (
-                    <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
+                    <div key={index} className="grid grid-cols-[2fr_1fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
                         <div onClick={()=>{
                             navigate(`/products/${product.category.toLowerCase()}/${product._id}`); scrollTo(0,0)
                         }} className="flex items-center md:gap-6 gap-3">
@@ -151,7 +158,7 @@ const Cart = () => {
                                     <p>Size: <span>{product.size || "N/A"}</span></p>
                                     <div className='flex items-center'>
                                         <p>Qty:</p>
-                                      <select onChange={e => updateCartItem(product._id, Number(e.target.value))} value={cartItems[product._id]} className="outline-none" onClick={e => e.stopPropagation()}>
+                                      <select onChange={e => updateCartItem(product._id, Number(e.target.value))} value={cartItems[product._id]?.amount || 0} className="outline-none" onClick={e => e.stopPropagation()}>
                                         {Array(product.inStockAmount).fill("").map((_, index) => (
                                             <option key={index} value={index + 1}>
                                                 {index + 1}
@@ -163,8 +170,17 @@ const Cart = () => {
                             </div>
                         </div>
                         <p className="text-center">{currency}{product.offerPrice * product.quantity}</p>
-                        <button onClick={()=> removeFromCart(product._id)} className="cursor-pointer mx-auto">
-                           <img className="inline-block w-6 h-6" src={assets.crossIcon} alt="remove" />
+                        <div className="flex items-center justify-center gap-2 md:w-20 w-16 h-[34px] mx-auto bg-primary/25 rounded select-none">
+                            <button onClick={() => removeFromCart(product._id)} className="cursor-pointer text-md px-2 h-full">
+                                -
+                            </button>
+                            <span className="w-5 text-center">{cartItems[product._id]?.amount || 0}</span>
+                            <button onClick={() => {addToCart(product._id, product.inStockAmount)}} className="cursor-pointer text-md px-2 h-full" >
+                                +
+                            </button>
+                        </div>
+                        <button onClick={()=> removeAllFromCart(product._id)} className="cursor-pointer mx-auto">
+                           <img className="inline-block w-6 h-6" src={assets.crossIcon} alt="remove all" />
                         </button>
                     </div>)
                 )}

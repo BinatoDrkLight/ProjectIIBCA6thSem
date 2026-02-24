@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { dummyProducts } from "../assets/assets";
 import toast from "react-hot-toast";
 import axios from "axios";
+import FindOpponent from "../utils/FindOpponent";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
@@ -66,28 +67,35 @@ export const AppContextProvider = ({children}) => {
     /********************************************* InStockAmount *****************************************************/
     /***************************************************************************************************************/
     //Add Products to Cart
-    const addToCart = (itemId, amount)=>{
+    const addToCart = (itemId, amount, index, cols, products = products)=>{
         let cartData = structuredClone(cartItems);
 
+        const opponents = FindOpponent(index, cols, Object.keys(products).length);
+        const opponentsWithId = [];
+        for(let opponent of opponents){
+            opponentsWithId.push(products[opponent]._id);
+        }
+
+        const today = new Date();
        
-            if(cartData[itemId]){
-                if(amount > cartData[itemId]){
-                    cartData[itemId] += 1;
-                    toast.success("Added to Cart")
-                } else {
-                    toast.error("No item left in the stock");
-                }
-            }else{
-                cartData[itemId] = 1;
+        if(cartData[itemId]){
+            if(amount > cartData[itemId].amount){
+                cartData[itemId].amount += 1;
                 toast.success("Added to Cart")
+            } else {
+                toast.error("No item left in the stock");
             }
-            setCartItems(cartData)   
+        }else{
+            cartData[itemId] = {amount: 1, date: today, opponents: opponentsWithId};
+            toast.success("Added to Cart")
+        }
+        setCartItems(cartData)
     }
 
     //Update Cart Item Quantity
     const updateCartItem = (itemId, quantity)=>{
         let cardData = structuredClone(cartItems);
-        cardData[itemId] = quantity;
+        cardData[itemId].amount = quantity;
         setCartItems(cardData)
         toast.success("Cart Updated")
     }
@@ -96,11 +104,20 @@ export const AppContextProvider = ({children}) => {
     const removeFromCart =  (itemId)=>{
         let cartData = structuredClone(cartItems);
         if(cartData[itemId]){
-            cartData[itemId] -= 1;
-            if(cartData[itemId] === 0){
+            cartData[itemId].amount -= 1;
+            if(cartData[itemId].amount === 0){
                 delete cartData[itemId];
             }
         }
+        toast.success("Removed from Cart")
+        setCartItems(cartData)
+    }
+
+     //Remove All Product from Cart
+    const removeAllFromCart =  (itemId)=>{
+        let cartData = structuredClone(cartItems);
+        delete cartData[itemId];
+
         toast.success("Removed from Cart")
         setCartItems(cartData)
     }
@@ -109,7 +126,7 @@ export const AppContextProvider = ({children}) => {
     const getCartCount = ()=>{
         let totalCount = 0;
         for(const item in cartItems){
-            totalCount += cartItems[item]
+            totalCount += cartItems[item].amount;
         }
         return totalCount;
     }
@@ -119,8 +136,8 @@ export const AppContextProvider = ({children}) => {
         let totalAmount = 0;
         for(const items in cartItems){
             let itemInfo = products.find((product)=> product._id === items);
-            if(cartItems[items] > 0 && itemInfo){
-                totalAmount += itemInfo.offerPrice * cartItems[items]
+            if(cartItems[items].amount > 0 && itemInfo){
+                totalAmount += itemInfo.offerPrice * cartItems[items].amount
             }
         }
         return Math.floor(totalAmount * 100) / 100;
@@ -152,7 +169,7 @@ export const AppContextProvider = ({children}) => {
     },[cartItems])
 
     const value = {navigate, user, setUser, setIsSeller, isSeller, showUserLogin, setShowUserLogin, products, 
-        currency, addToCart, updateCartItem, removeFromCart, cartItems, searchQuery, setSearchQuery, getCartAmount,
+        currency, addToCart, updateCartItem, removeFromCart, removeAllFromCart, cartItems, searchQuery, setSearchQuery, getCartAmount,
         getCartCount, axios, fetchProducts, setCartItems,
     }
         return <AppContext.Provider value = {value}>

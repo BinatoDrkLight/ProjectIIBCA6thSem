@@ -1,14 +1,12 @@
 import React from 'react';
 import { assets } from '../assets/assets';
 import { useAppContext } from '../context/AppContext';
-import toast from 'react-hot-toast';
-import { useEffect } from 'react';
     
-const ProductCard = ({product}) => {
-    const {currency, addToCart, removeFromCart, cartItems, navigate} = useAppContext()
-
+const ProductCard = ({product, index, cols, products}) => {
+    const {currency, addToCart, removeAllFromCart, cartItems, navigate} = useAppContext()
+    
     return product && (
-        <div onClick={()=> {navigate(`/products/${product.category.toLowerCase()}/${product._id}`); scrollTo(0,0)}} className="border border-gray-500/20 rounded-md md:px-4 px-3 py-2 bg-white w-full h-full">
+        <div onClick={()=> {navigate(`/products/${product.category.toLowerCase()}/${product._id}`, {state: {index: index, cols: cols, products: products}}); scrollTo(0,0)}} className="border border-gray-500/20 rounded-md md:px-4 px-3 py-2 bg-white w-full h-full">
             <div className="group cursor-pointer flex items-center justify-center py-1">
                 <img className="w-30 h-30 md:w-40 md:h-40 object-cover group-hover:scale-105 transition-transform" src={product.image[0]} alt={product.name} />
             </div>
@@ -27,20 +25,14 @@ const ProductCard = ({product}) => {
                     </p>
                     <div onClick={(e) => {e.stopPropagation(); }} className="text-primary">
                         {!cartItems[product._id] ? (
-                            <button className="flex items-center justify-center gap-1 bg-primary/10 border border-primary/40 w-[3.4rem] h-[1.8rem] md:w-[80px] rounded cursor-pointer" onClick={() => addToCart(product._id, product.inStockAmount)} >
+                            <button className="flex items-center justify-center gap-1 bg-primary/10 border border-primary/40 w-[3.4rem] h-[1.8rem] md:w-[80px] rounded cursor-pointer" onClick={() => addToCart(product._id, product.inStockAmount, index, cols, products)} >
                                 <img className="w-4 h-4 md:w-5 md:h-5" src={assets.addToCart} alt="cartIcon"/>
                                 Add
                             </button>
                         ) : (
-                            <div className="flex items-center justify-center gap-2 md:w-20 w-16 h-[34px] bg-primary/25 rounded select-none">
-                                <button onClick={() => removeFromCart(product._id)} className="cursor-pointer text-md px-2 h-full" >
-                                    -
-                                </button>
-                                <span className="w-5 text-center">{cartItems[product._id]}</span>
-                                <button onClick={() => {addToCart(product._id, product.inStockAmount)}} className="cursor-pointer text-md px-2 h-full" >
-                                    +
-                                </button>
-                            </div>
+                            <button className="flex items-center justify-center gap-1 bg-primary/10 border border-primary/40 w-[3.4rem] h-[1.8rem] md:w-[80px] rounded cursor-pointer" onClick={() => removeAllFromCart(product._id)} >
+                                Remove
+                            </button>
                         )}
                     </div>
                 </div>

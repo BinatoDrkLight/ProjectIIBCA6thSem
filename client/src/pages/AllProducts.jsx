@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import ProductCard from '../components/ProductCard';
+import { useCountGridCols } from '../utils/CountGridCols';
 
 const AllProducts = () => {
 
     const {products, searchQuery} = useAppContext()
     const [filteredProducts, setFilteredProducts] = useState([])
+
+    const gridRef = useRef(null);
+    const cols = useCountGridCols(gridRef);
 
     useEffect(()=>{
         if(searchQuery.length > 0){
@@ -24,9 +28,9 @@ const AllProducts = () => {
                 <div className='w-16 h-0.5 bg-primary rounded-full'></div>
             </div>
 
-            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-5 mt-6'>
+            <div ref={gridRef} className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-5 mt-6'>
                 {filteredProducts.filter((product)=> product.inStock).map((product, index)=>(
-                        <ProductCard key={index} product={product}/> //use index as position
+                        <ProductCard key={index} product={product} index={index} cols={cols} products={filteredProducts} /> //use index as position
                 ))}
             </div>
         </div>
