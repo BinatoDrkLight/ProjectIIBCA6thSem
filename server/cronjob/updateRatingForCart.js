@@ -5,7 +5,7 @@ import glickoTwo from "../utils/glickotwo.js";
 export const updateRatingForCart = () => {
     setInterval(async () => {
         try {
-            const fiveHoursAgo = new Date(Date.now() - 5 * 60 * 60 * 1000);
+            const fiveHoursAgo = new Date(Date.now() - 1000);
 
             // Fetch all users
             const users = await User.find();
@@ -37,5 +37,5 @@ export const updateRatingForCart = () => {
         } catch (err) {
             console.error("Update Rating for cart item failed", err);
         }
-    }, 5 * 60 * 60 * 1000);
+    }, 1000);
 };

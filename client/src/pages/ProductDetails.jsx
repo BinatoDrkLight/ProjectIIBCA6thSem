@@ -32,8 +32,9 @@ const ProductDetails = () => {
         opponentsWithId.push(products[opponent]._id);
     }
 
-    const userId = user._id
+    const userId = user?._id
     const from = 'click'
+
     const updateClickRating = async () =>{
         try{
             const {data} = await axios.post('/api/product/update-click-rating', {product, opponentsWithId, userId, from});
@@ -50,12 +51,17 @@ const ProductDetails = () => {
     }
 
     useEffect(()=>{
-        if(product.clickFlag?.[userId] === 'false' || product.clickFlag?.[userId] === undefined){
-            const updateAfterFiveSec = setTimeout(() => {
-            updateClickRating();
-            }, 5000);
+        if(userId){
+            console.log(userId)
+            console.log(product.clickFlag?.[userId])
+            console.log(product.clickFlag)
+            if(product.clickFlag?.[userId] === 'false' || product.clickFlag?.[userId] === undefined){   
+                const updateAfterFiveSec = setTimeout(() => {
+                updateClickRating();
+                }, 5000);
 
-            return () => clearTimeout(updateAfterFiveSec)
+                return () => clearTimeout(updateAfterFiveSec)
+            }
         }
     }, [product, userId])
 
