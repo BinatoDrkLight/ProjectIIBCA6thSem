@@ -12,8 +12,8 @@ const updateRating = async(items) => {
         const success = await glickoTwo({
             winnerId: item.product,
             loserIds: item.opponents,
-            weightForWin: 1.0,
-            weightForLoss: 0.20,
+            weightForWin: 0.2,
+            weightForLoss: 0.1,
         });
     }
 }

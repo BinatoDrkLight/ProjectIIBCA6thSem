@@ -28,8 +28,8 @@ export const updateRatingForCart = () => {
                     await glickoTwo({
                         winnerId: key,
                         loserIds: item.opponents || [],
-                        weightForWin: 0.6,
-                        weightForLoss: 0.12,
+                        weightForWin: 0.1,
+                        weightForLoss: 0.05,
                         userId: user._id
                     });
                 }

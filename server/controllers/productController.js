@@ -81,8 +81,8 @@ export const updateClickRating = async (req, res) => {
         await glickoTwo({
             winnerId: product,
             loserIds: opponentsWithId,
-            weightForWin: 0.2,
-            weightForLoss: 0.05,
+            weightForWin: 0.05,
+            weightForLoss: 0.02,
             userId: userId,
             from: from
         });
